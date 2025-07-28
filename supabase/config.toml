@@ -1,1 +1,10 @@
 project_id = "fmemrmrvnfxbkzhssjdf"
+
+[functions.search-restaurants]
+verify_jwt = false
+
+[functions.get-recipe-suggestions]
+verify_jwt = false
+
+[functions.recommend-restaurants]
+verify_jwt = true

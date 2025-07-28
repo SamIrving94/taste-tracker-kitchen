@@ -13,6 +13,8 @@ import Dashboard from "./pages/Dashboard";
 import LogVisit from "./pages/LogVisit";
 import RecipeSearch from "./pages/RecipeSearch";
 import Collections from "./pages/Collections";
+import Restaurants from "./pages/Restaurants";
+import RestaurantDetail from "./pages/RestaurantDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => (
               <Route path="log-visit" element={<LogVisit />} />
               <Route path="search" element={<RecipeSearch />} />
               <Route path="collections" element={<Collections />} />
+              <Route path="restaurants" element={<Restaurants />} />
+              <Route path="restaurant/:id" element={<RestaurantDetail />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

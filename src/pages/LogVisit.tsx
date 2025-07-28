@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { RestaurantSearch } from '@/components/RestaurantSearch';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   MapPin, 
   Camera, 
@@ -18,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 const LogVisit = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
   const [formData, setFormData] = useState({
     restaurant: '',
     location: '',
@@ -100,12 +103,16 @@ const LogVisit = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="restaurant">Restaurant Name</Label>
-              <Input
-                id="restaurant"
-                placeholder="e.g., Chez Laurent"
-                value={formData.restaurant}
-                onChange={(e) => setFormData(prev => ({ ...prev, restaurant: e.target.value }))}
-                required
+              <RestaurantSearch
+                onSelect={(restaurant) => {
+                  setSelectedRestaurant(restaurant);
+                  setFormData(prev => ({
+                    ...prev,
+                    restaurant: restaurant.name,
+                    location: restaurant.location
+                  }));
+                }}
+                placeholder="Search restaurants or add new..."
               />
             </div>
             
