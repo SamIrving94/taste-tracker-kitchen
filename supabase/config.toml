@@ -3,6 +3,9 @@ project_id = "fmemrmrvnfxbkzhssjdf"
 [functions.search-restaurants]
 verify_jwt = false
 
+[functions.google-places-search]
+verify_jwt = false
+
 [functions.get-recipe-suggestions]
 verify_jwt = false
 
