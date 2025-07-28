@@ -49,10 +49,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let mounted = true;
+
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Use setTimeout to avoid deadlock
+        setTimeout(() => {
+          if (mounted) {
+            loadProfile(session.user.id);
+          }
+        }, 0);
+      } else {
+        setProfile(null);
+        setIsLoading(false);
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
+      if (!mounted) return;
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
       if (session?.user) {
         loadProfile(session.user.id);
       } else {
@@ -60,20 +88,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await loadProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadProfile = async (userId: string) => {

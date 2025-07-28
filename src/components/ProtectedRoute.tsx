@@ -8,32 +8,27 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, session, isLoading } = useAuth();
+
+  console.log('ProtectedRoute - Loading:', isLoading, 'User:', user?.email, 'Session:', !!session);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen p-4 space-y-4">
-        <div className="flex items-center space-x-4">
-          <Skeleton className="w-12 h-12 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[200px]" />
-            <Skeleton className="h-4 w-[160px]" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+      <div className="min-h-screen p-4 space-y-4 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your account...</p>
         </div>
       </div>
     );
   }
 
   if (!user) {
+    console.log('No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
+  console.log('User authenticated, rendering protected content');
   return <>{children}</>;
 };
 
