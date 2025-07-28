@@ -103,6 +103,7 @@ export type Database = {
           notes: string | null
           photo_url: string | null
           rating: number | null
+          restaurant_id: string | null
           restaurant_name: string
           updated_at: string | null
           user_id: string | null
@@ -115,6 +116,7 @@ export type Database = {
           notes?: string | null
           photo_url?: string | null
           rating?: number | null
+          restaurant_id?: string | null
           restaurant_name: string
           updated_at?: string | null
           user_id?: string | null
@@ -127,9 +129,72 @@ export type Database = {
           notes?: string | null
           photo_url?: string | null
           rating?: number | null
+          restaurant_id?: string | null
           restaurant_name?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_visits_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurants: {
+        Row: {
+          address: string | null
+          created_at: string
+          cuisine_type: string | null
+          id: string
+          latitude: number | null
+          location: string
+          longitude: number | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          place_id: string | null
+          price_level: number | null
+          rating: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          id?: string
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          place_id?: string | null
+          price_level?: number | null
+          rating?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          id?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          place_id?: string | null
+          price_level?: number | null
+          rating?: number | null
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
