@@ -38,11 +38,11 @@ const HeroSection = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Button variant="hero" size="xl" className="text-lg">
+          <Button variant="hero" size="xl" className="text-lg" onClick={() => window.location.href = '/signup'}>
             <Camera className="w-5 h-5" />
             Start Your Culinary Journey
           </Button>
-          <Button variant="outline" size="xl" className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-foreground">
+          <Button variant="outline" size="xl" className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white hover:text-foreground" onClick={() => window.location.href = '/login'}>
             <Search className="w-5 h-5" />
             Discover Recipes
           </Button>

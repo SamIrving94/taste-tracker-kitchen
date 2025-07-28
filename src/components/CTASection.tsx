@@ -17,7 +17,7 @@ const CTASection = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Button variant="secondary" size="xl" className="bg-white text-primary hover:bg-white/90">
+          <Button variant="secondary" size="xl" className="bg-white text-primary hover:bg-white/90" onClick={() => window.location.href = '/signup'}>
             <Mail className="w-5 h-5 mr-2" />
             Get Early Access
           </Button>
