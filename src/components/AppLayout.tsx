@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const AppLayout = () => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,7 +39,7 @@ const AppLayout = () => {
             </div>
             <div>
               <h1 className="font-semibold text-foreground">Recipe Rescue</h1>
-              <p className="text-xs text-muted-foreground">Welcome back, {user?.name}</p>
+              <p className="text-xs text-muted-foreground">Welcome back, {profile?.full_name || user?.email}</p>
             </div>
           </div>
           <Button

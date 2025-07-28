@@ -1,17 +1,30 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User, Session } from '@supabase/supabase-js';
 
-interface User {
+interface Profile {
   id: string;
-  email: string;
-  name: string;
-  createdAt: string;
+  user_id: string;
+  email?: string;
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  dietary_preferences?: string[];
+  favorite_cuisines?: string[];
+  location?: string;
+  cooking_skill_level?: 'beginner' | 'intermediate' | 'advanced';
+  created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
-  logout: () => void;
+  profile: Profile | null;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, fullName: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
   isLoading: boolean;
 }
 
@@ -31,73 +44,141 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const savedUser = localStorage.getItem('recipe-rescue-user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await loadProfile(session.user.id);
+      } else {
+        setProfile(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Mock authentication - in real app, this would call an API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simple validation for demo
-    if (email && password.length >= 6) {
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        createdAt: new Date().toISOString(),
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('recipe-rescue-user', JSON.stringify(mockUser));
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+      } else {
+        setProfile(data as Profile);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
       setIsLoading(false);
-      return true;
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
-  const signup = async (email: string, password: string, name: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     
-    // Mock signup
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (email && password.length >= 6 && name) {
-      const mockUser: User = {
-        id: Date.now().toString(),
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        name,
-        createdAt: new Date().toISOString(),
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('recipe-rescue-user', JSON.stringify(mockUser));
+        password,
+      });
+
+      if (error) {
+        setIsLoading(false);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
       setIsLoading(false);
-      return true;
+      return { success: false, error: 'An unexpected error occurred' };
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('recipe-rescue-user');
+  const signup = async (email: string, password: string, fullName: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) {
+        setIsLoading(false);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      setIsLoading(false);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const updateProfile = async (updates: Partial<Profile>): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      // Reload profile
+      await loadProfile(user.id);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'An unexpected error occurred' };
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      session, 
+      login, 
+      signup, 
+      logout, 
+      updateProfile, 
+      isLoading 
+    }}>
       {children}
     </AuthContext.Provider>
   );
