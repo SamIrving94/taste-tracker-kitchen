@@ -60,26 +60,73 @@ const LogVisit = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Mock submission - in real app, this would save to database
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // First, save or get restaurant
+      let restaurantId = selectedRestaurant?.id;
+      
+      if (selectedRestaurant && !restaurantId) {
+        // Save new restaurant to Supabase
+        const { data: restaurant, error: restaurantError } = await supabase
+          .from('restaurants')
+          .insert({
+            name: selectedRestaurant.name,
+            location: selectedRestaurant.location,
+            address: selectedRestaurant.address,
+            cuisine_type: selectedRestaurant.cuisine_type,
+            rating: selectedRestaurant.rating,
+            price_level: selectedRestaurant.price_level,
+            place_id: selectedRestaurant.place_id
+          })
+          .select()
+          .single();
 
-    // Save to localStorage for demo
-    const visits = JSON.parse(localStorage.getItem('recipe-rescue-visits') || '[]');
-    const newVisit = {
-      id: Date.now().toString(),
-      ...formData,
-      createdAt: new Date().toISOString()
-    };
-    visits.push(newVisit);
-    localStorage.setItem('recipe-rescue-visits', JSON.stringify(visits));
+        if (restaurantError) throw restaurantError;
+        restaurantId = restaurant.id;
+      }
 
-    setIsSubmitting(false);
-    toast({
-      title: "Visit logged successfully!",
-      description: `Added ${formData.restaurant} to your collection.`,
-    });
-    
-    navigate('/app');
+      // Save each dish as a separate restaurant visit
+      for (const dish of formData.dishes) {
+        const { error: visitError } = await supabase
+          .from('restaurant_visits')
+          .insert({
+            restaurant_name: formData.restaurant,
+            location: formData.location,
+            restaurant_id: restaurantId,
+            dish_name: dish.name,
+            rating: dish.rating,
+            notes: `Restaurant: ${formData.notes || 'No notes'}\nDish: ${dish.notes || 'No notes'}`,
+            created_at: new Date(formData.date).toISOString()
+          });
+
+        if (visitError) throw visitError;
+      }
+
+      // Also save to localStorage for backward compatibility
+      const visits = JSON.parse(localStorage.getItem('recipe-rescue-visits') || '[]');
+      const newVisit = {
+        id: Date.now().toString(),
+        ...formData,
+        createdAt: new Date().toISOString()
+      };
+      visits.push(newVisit);
+      localStorage.setItem('recipe-rescue-visits', JSON.stringify(visits));
+
+      toast({
+        title: "Visit logged successfully!",
+        description: `Added ${formData.restaurant} with ${formData.dishes.length} dish(es) to your collection.`,
+      });
+      
+      navigate('/app/restaurants');
+    } catch (error) {
+      console.error('Error saving visit:', error);
+      toast({
+        title: "Error saving visit",
+        description: "Please try again or check your connection.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
